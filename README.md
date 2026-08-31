@@ -18,7 +18,7 @@ personally built.
 - Invite-token flat creation and joining, with admin roles and per-flat
   data isolation for multiple flats/users
 - Shared pantry tracking with expiry dates, scoped to each flat
-- AI-generated recipes (via the OpenAI API) from the ingredients currently
+- AI-generated recipes (via OpenRouter) from the ingredients currently
   in the pantry
 
 ## My contribution
@@ -29,7 +29,7 @@ roles, and the multi-user isolation between flats.
 
 ## Tech stack
 
-Next.js (App Router), Supabase (Postgres, auth, SSR), OpenAI API, React.
+Next.js (App Router), Supabase (Postgres, auth, SSR), OpenRouter, React.
 
 ## Running it locally
 
@@ -44,11 +44,14 @@ Next.js (App Router), Supabase (Postgres, auth, SSR), OpenAI API, React.
    NEXT_PUBLIC_SUPABASE_URL=
    NEXT_PUBLIC_SUPABASE_ANON_KEY=
    SUPABASE_SERVICE_ROLE_KEY=
-   OPENAI_API_KEY=
+   OPENROUTER_API_KEY=
    ```
-   The Supabase values come from your own Supabase project (free tier at
-   [supabase.com](https://supabase.com) — Project Settings → API). The
-   OpenAI key comes from [platform.openai.com](https://platform.openai.com/api-keys).
+   See `.env.example` for what each value is and where it comes from. The
+   Supabase values come from your own Supabase project (free tier at
+   [supabase.com](https://supabase.com) — Project Settings → Data API); use
+   the bare Project URL, not the REST endpoint. The OpenRouter key comes
+   from [openrouter.ai/keys](https://openrouter.ai/keys) and recipe
+   generation runs on free models, so it costs nothing to try.
 3. Run the dev server:
    ```
    npm run dev

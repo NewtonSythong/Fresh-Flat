@@ -192,6 +192,22 @@ finish() {
 # NewtonProfile/.scratch/portfolio-site/issues/13-fresh-flat-redeploy.md.
 # ──────────────────────────────────────────────────────────────────────────
 
+# sanitise_project_url VARNAME — strip the two things that have actually gone
+# wrong when pasting the Supabase Project URL into this prompt:
+#   1. control characters, e.g. the literal 0x16 that Ctrl-V inserts in Git
+#      Bash (where Ctrl-V is NOT paste — use right-click or Shift-Insert), and
+#   2. a trailing "/rest/v1/", which is what the dashboard's REST endpoint
+#      field shows. createClient() appends that itself, so leaving it on
+#      produces doubled paths and every query 404s.
+sanitise_project_url() {
+  local var="$1" value="${!1}" cleaned
+  cleaned=$(printf '%s' "$value" | tr -d '[:cntrl:]' | sed -E 's#/+(rest/v1)?/*$##')
+  if [[ "$cleaned" != "$value" ]]; then
+    warn "cleaned up the pasted URL → $cleaned"
+  fi
+  printf -v "$var" '%s' "$cleaned"
+}
+
 REPO_DIR="/c/Users/sageb/Documents/Projects/Fresh_Flat/FreshFlat"
 ENV_FILE="$REPO_DIR/.env"
 MIGRATION_FILE="$REPO_DIR/supabase/migrations/20260826160000_initial_schema.sql"
@@ -224,6 +240,7 @@ if $REUSE_DB; then
   step "go to Project Settings → Data API (or 'API' on older dashboards)."
   step "Copy the Project URL."
   ask NEXT_PUBLIC_SUPABASE_URL "Paste the Project URL:"
+  sanitise_project_url NEXT_PUBLIC_SUPABASE_URL
   step "Copy the 'anon' / 'public' key from the same page."
   ask_secret NEXT_PUBLIC_SUPABASE_ANON_KEY "Paste the anon public key:"
   step "Copy the 'service_role' / 'secret' key too — treat it like a"
@@ -244,6 +261,7 @@ else
   step "Once ready, go to Project Settings → Data API (or 'API') and copy"
   step "the Project URL."
   ask NEXT_PUBLIC_SUPABASE_URL "Paste the Project URL:"
+  sanitise_project_url NEXT_PUBLIC_SUPABASE_URL
   step "Copy the 'anon' / 'public' key from the same page."
   ask_secret NEXT_PUBLIC_SUPABASE_ANON_KEY "Paste the anon public key:"
   step "Copy the 'service_role' / 'secret' key too — treat it like a"
@@ -271,17 +289,21 @@ else
   }
 fi
 
-# ── Stage: OpenAI ────────────────────────────────────────────────────────────
-stage "OpenAI — API key for recipe generation"
-say "model/recipe.js calls OpenAI's API directly (gpt-4o-mini) to generate"
-say "recipes. Worth confirming this key is one you administer too — it may"
-say "have belonged to the same teammate as the Vercel account."
-open_url "https://platform.openai.com/api-keys"
-step "If you already have a working key you administer, reuse it."
-step "Otherwise click 'Create new secret key', name it (e.g. 'fresh-flat'),"
-step "and copy it — OpenAI only shows it once."
-ask_secret OPENAI_API_KEY "Paste the OpenAI API key (OPENAI_API_KEY):"
-write_env OPENAI_API_KEY "$OPENAI_API_KEY"
+# ── Stage: OpenRouter ───────────────────────────────────────────────────────
+stage "OpenRouter — API key for recipe generation"
+say "model/recipe.js generates recipes through OpenRouter's free tier, not"
+say "OpenAI directly — the original OpenAI key belonged to the same"
+say "inaccessible account as the Vercel project, and free models cost"
+say "nothing to run. Same arrangement Note-Pilot uses."
+open_url "https://openrouter.ai/keys"
+step "If you already have an OpenRouter key (Note-Pilot uses one), reuse it."
+step "Otherwise click 'Create Key', name it (e.g. 'fresh-flat'), and copy it"
+step "— OpenRouter only shows it once."
+ask_secret OPENROUTER_API_KEY "Paste the OpenRouter API key (OPENROUTER_API_KEY):"
+write_env OPENROUTER_API_KEY "$OPENROUTER_API_KEY"
+note "Free models are capped per day on a zero-balance account. Adding a"
+note "small amount of credit to OpenRouter raises that ceiling considerably"
+note "without changing which models are used."
 
 # ── Stage: Vercel — fresh import into Newton's own account ─────────────────
 stage "Vercel — import into your own account"
@@ -299,7 +321,7 @@ step "four below (paste the same values you just captured):"
 note "  NEXT_PUBLIC_SUPABASE_URL      = ${NEXT_PUBLIC_SUPABASE_URL:0:30}...(hidden)"
 note "  NEXT_PUBLIC_SUPABASE_ANON_KEY = ...(hidden)"
 note "  SUPABASE_SERVICE_ROLE_KEY     = ...(hidden)"
-note "  OPENAI_API_KEY                = ...(hidden)"
+note "  OPENROUTER_API_KEY            = ...(hidden)"
 step "Click Deploy and wait for the build to finish."
 ask NEW_LIVE_URL "Paste the live production URL Vercel gives you:"
 note "Once confirmed working in the next stage, this URL needs to replace"
@@ -320,8 +342,9 @@ if ! confirm "Did signup/login, the flat, the pantry ingredient, and the AI reci
   warn "If auth failed: double-check the three Supabase env vars in Vercel"
   warn "match the project you intended, and that they're scoped to"
   warn "Production."
-  warn "If recipe generation failed: check OPENAI_API_KEY the same way, and"
-  warn "confirm the key has available quota on platform.openai.com/usage."
+  warn "If recipe generation failed: check OPENROUTER_API_KEY the same way,"
+  warn "and confirm the free-model daily allowance isn't exhausted at"
+  warn "openrouter.ai/activity."
   SKIPPED+=("confirm full signup → flat → ingredient → recipe flow on the new deployment")
 fi
 # ──────────────────────────────────────────────────────────────────────────

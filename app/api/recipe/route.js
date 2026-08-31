@@ -5,6 +5,11 @@ import {
 } from '@/model/recipe';
 import { NextResponse } from 'next/server';
 
+// Recipe generation calls a free-tier model that can sit in a provider queue.
+// Vercel's default serverless limit is 10s, short enough to kill a legitimately
+// slow generation; 60s is the Hobby-plan maximum.
+export const maxDuration = 60;
+
 export async function GET() {
   // Returns all recipes from the database
   const recipes = await getAllRecipesOfFlatWithFilters(
