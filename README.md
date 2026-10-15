@@ -3,7 +3,7 @@
 A household management app for flatmates: shared pantry tracking with expiry
 dates, and AI-generated recipes based on what's actually in the flat.
 
-**Live demo:** https://fresh-flat.vercel.app/
+**Live demo:** https://fresh-flat-psi.vercel.app/
 
 ## Background
 
